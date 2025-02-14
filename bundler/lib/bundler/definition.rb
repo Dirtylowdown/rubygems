@@ -725,7 +725,7 @@ module Bundler
     end
 
     def start_resolution
-      local_platform_needed_for_resolvability = @most_specific_non_local_locked_ruby_platform && !@platforms.include?(local_platform)
+      local_platform_needed_for_resolvability = @most_specific_non_local_locked_platform && !@platforms.include?(local_platform)
       @platforms << local_platform if local_platform_needed_for_resolvability
       add_platform(Gem::Platform::RUBY) if RUBY_ENGINE == "truffleruby"
 
@@ -733,9 +733,9 @@ module Bundler
 
       @resolved_bundler_version = result.find {|spec| spec.name == "bundler" }&.version
 
-      if @most_specific_non_local_locked_ruby_platform
-        if spec_set_incomplete_for_platform?(result, @most_specific_non_local_locked_ruby_platform)
-          @platforms.delete(@most_specific_non_local_locked_ruby_platform)
+      if @most_specific_non_local_locked_platform
+        if spec_set_incomplete_for_platform?(result, @most_specific_non_local_locked_platform)
+          @platforms.delete(@most_specific_non_local_locked_platform)
         elsif local_platform_needed_for_resolvability
           @platforms.delete(local_platform)
         end
@@ -752,22 +752,22 @@ module Bundler
 
     def current_platform_locked?
       @platforms.any? do |bundle_platform|
-        MatchPlatform.platforms_match?(bundle_platform, local_platform)
+        generic_local_platform == bundle_platform || local_platform === bundle_platform
       end
     end
 
     def add_current_platform
       return if @platforms.include?(local_platform)
 
-      @most_specific_non_local_locked_ruby_platform = find_most_specific_locked_ruby_platform
-      return if @most_specific_non_local_locked_ruby_platform
+      @most_specific_non_local_locked_platform = find_most_specific_locked_platform
+      return if @most_specific_non_local_locked_platform
 
       @platforms << local_platform
       true
     end
 
-    def find_most_specific_locked_ruby_platform
-      return unless generic_local_platform_is_ruby? && current_platform_locked?
+    def find_most_specific_locked_platform
+      return unless current_platform_locked?
 
       @most_specific_locked_platform
     end
