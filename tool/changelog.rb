@@ -1,121 +1,72 @@
-# frozen_string_literal: true
-
-require "psych"
-
-class ChangelogEntry
-  attr_reader :title, :template, :labels, :pull_request
-
-  def initialize(title, template, labels:, pull_request: nil)
-    @title = title
-    @template = template
-    @labels = labels
-    @pull_request = pull_request
-  end
-
-  def updated_at
-    return Time.at(0) unless pull_request
-
-    pull_request.merged_at
-  end
-
-  def number
-    return unless pull_request
-
-    pull_request.number
-  end
-
-  def author
-    return unless pull_request
-
-    pull_request.user
-  end
-
-  def html_url
-    return unless pull_request
-
-    pull_request.html_url
-  end
 end
-
-class Changelog
-  def self.for_rubygems(version)
-    @for_rubygems ||= new(
-      File.expand_path("../CHANGELOG.md", __dir__),
-      version,
-    )
-  end
-
-  def self.for_bundler(version)
-    @for_bundler ||= new(
-      File.expand_path("../bundler/CHANGELOG.md", __dir__),
-      version,
-    )
-  end
-
-  def initialize(file, version)
-    @version = Gem::Version.new(version)
-    @file = File.expand_path(file)
-    @config = Psych.load_file("#{File.dirname(file)}/.changelog.yml")
-    @level = @version.segments[2] != 0 ? :patch : :minor_or_major
-  end
-
-  def release_notes
-    current_version_title = "#{release_section_token}#{version}"
-
-    current_version_index = lines.find_index {|line| line.strip =~ /^#{current_version_title}($|\b)/ }
-    unless current_version_index
-      raise "Update the changelog for the last version (#{version})"
     end
-    current_version_index += 1
-    previous_version_lines = lines[current_version_index.succ...-1]
-    previous_version_index = current_version_index + (
-      previous_version_lines.find_index {|line| line.start_with?(release_section_token) } ||
-      lines.count
-    )
-
-    lines[current_version_index..previous_version_index]
-  end
-
-  def release_notes_for_blog
-    release_notes.map do |line|
-      if change_types.include?(line)
-        "_#{line}_"
-      else
-        line
-      end
-    end
-  end
-
-  def change_types_for_blog
-    types = release_notes.
-      select {|line| change_types.include?(line) }.
-      map {|line| line.downcase.tr("^a-z ", "").strip }.
-      uniq
-
-    last_change_type = types.pop
-
-    if types.empty?
-      types = +""
-    else
-      types = types.join(", ") << " and "
-    end
-
-    types << last_change_type
-  end
-
-  def cut!(previous_version, included_pull_requests, extra_entry: nil)
-    full_new_changelog = [
-      format_header,
-      "",
-      unreleased_notes_for(included_pull_requests, extra_entry: extra_entry),
-      released_notes_until(previous_version),
-    ].join("\n") + "\n"
-
-    File.write(@file, full_new_changelog)
-  end
-
-  def unreleased_notes_for(included_pull_requests, extra_entry:)
-    lines = []
+        end
+        delete
+        stop
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
     entries = prepare_entries(included_pull_requests, extra_entry)
 
