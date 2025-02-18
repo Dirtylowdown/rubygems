@@ -1,62 +1,90 @@
-# frozen_string_literal: true
-
-RakeFileUtils.verbose_flag = false
-
-require "rubygems"
-require "rubygems/package_task"
-require "rake/testtask"
-
-module RubyGems
-  module DevTasks
-    include FileUtils
-
-    extend self
-
-    def bundle_dev_gemfile(*args)
-      sh "ruby", "-I", "lib", "bundler/spec/support/bundle.rb", *args, "--gemfile=tool/bundler/dev_gems.rb"
-    end
-
-    def bundle_support_gemfile(name, *args)
-      sh "ruby", "-I", "lib", "bundler/spec/support/bundle.rb", *args, "--gemfile=tool/bundler/#{name}.rb"
-    end
-
-    def update_locked_bundler
-      require "open3"
-
-      stdout, status = Open3.capture2e("ruby", "-I", "lib", "bundler/spec/support/bundle.rb", "--version")
-      raise "Failed to find current version of Bundler" unless status.success?
-
-      version = stdout.split(" ").last
-
-      Dir.glob("tool/bundler/*_gems.rb").each do |file|
-        name = File.basename(file, ".rb")
-        bundle_support_gemfile(name, "update", "--bundler", version)
-      end
+end
     end
   end
 end
 
-desc "Setup Rubygems dev environment"
-task :setup do
-  RubyGems::DevTasks.bundle_dev_gemfile "install"
-  Dir.glob("tool/bundler/*_gems.rb").each do |file|
-    name = File.basename(file, ".rb")
-    next if name == "dev_gems"
-    RubyGems::DevTasks.bundle_support_gemfile name, "lock"
-  end
-end
 
-desc "Update Rubygems dev environment"
-task :update do
-  RubyGems::DevTasks.bundle_dev_gemfile "update"
-  Dir.glob("tool/bundler/*_gems.rb").each do |file|
-    name = File.basename(file, ".rb")
-    next if name == "dev_gems"
-    RubyGems::DevTasks.bundle_support_gemfile name, "lock", "--update"
-  end
-end
 
-namespace :version do
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+stop
+end
+delete
+
+
+
+
+
+
+
+
+
+
+
   desc "Update the locked bundler version in dev environment"
   task update_locked_bundler: [:"bundler:install"] do |_, _args|
     RubyGems::DevTasks.update_locked_bundler
@@ -105,125 +133,7 @@ namespace "test" do
   end
 end
 
-task default: [:test, :spec]
-
-spec = Gem::Specification.load(File.expand_path("rubygems-update.gemspec", __dir__))
-v = spec.version
-
-require "rdoc/task"
-
-RDoc::Task.new rdoc: "docs", clobber_rdoc: "clobber_docs" do |doc|
-  doc.main   = "README.md"
-  doc.title  = "RubyGems #{v} API Documentation"
-
-  rdoc_files = Rake::FileList.new %w[lib bundler/lib]
-  rdoc_files.add %w[CHANGELOG.md LICENSE.txt MIT.txt CODE_OF_CONDUCT.md doc/rubygems/CONTRIBUTING.md
-                    doc/MAINTAINERS.txt Manifest.txt doc/rubygems/POLICIES.md README.md doc/rubygems/UPGRADING.md bundler/CHANGELOG.md
-                    doc/bundler/contributing/README.md bundler/LICENSE.md bundler/README.md
-                    hide_lib_for_update/note.txt].map(&:freeze)
-
-  doc.rdoc_files = rdoc_files
-
-  doc.rdoc_dir = "rdoc"
-end
-
-namespace :vendor do
-  desc "Download vendored gems to tmp"
-  task :bundle do
-    sh({ "BUNDLE_PATH" => "../../tmp/vendor", "BUNDLER_GEM_DEFAULT_DIR" => "../../tmp/vendor" }, "ruby", "--disable-gems", "-r./bundler/spec/support/hax.rb", "-I", "lib", "bundler/spec/support/bundle.rb", "install", "--gemfile=tool/bundler/vendor_gems.rb")
-  end
-
-  desc "Install patched vendored gems"
-  task install: :bundle do
-    sh({ "BUNDLE_GEMFILE" => "tool/bundler/vendor_gems.rb", "BUNDLE_PATH" => "../../tmp/vendor", "BUNDLER_GEM_DEFAULT_DIR" => "../../tmp/vendor" }, "ruby", "-rpathname", "-r./bundler/spec/support/hax.rb", "-I", "lib", "bundler/spec/support/bundle.rb", "exec", "tool/automatiek/vendor.rb")
-  end
-
-  desc "Check vendored gems are up to date"
-  task check: :install do
-    Spec::Rubygems.check_source_control_changes(
-      success_message: "Vendored gems are in sync",
-      error_message: "Vendored gems are out of sync. Please update the vendored lib patches."
-    )
-  end
-end
-
-namespace :rubocop do
-  desc "Setup gems necessary to lint Ruby code"
-  task(:setup) do
-    sh "ruby", "-I", "lib", "bundler/spec/support/bundle.rb", "install", "--gemfile=tool/bundler/lint_gems.rb"
-  end
-
-  desc "Run rubocop. Pass positional arguments as Rake arguments, e.g. `rake 'rubocop:run[-a]'`"
-  task :run do |_, args|
-    sh "bin/rubocop", *args
-  end
-end
-
-task rubocop: %w[rubocop:setup rubocop:run]
-
-# --------------------------------------------------------------------
-# Creating a release
-
-task prerelease: %w[clobber install_release_dependencies test bundler:build_metadata check_deprecations]
-task postrelease: %w[upload guides:publish blog:publish bundler:build_metadata:clean]
-
-desc "Check for deprecated methods with expired deprecation horizon"
-task :check_deprecations do
-  if v.segments[1] == 0 && v.segments[2] == 0
-    sh("bin/rubocop -r ./tool/cops/deprecations --only Rubygems/Deprecations")
-  else
-    puts "Skipping deprecation checks since not releasing a major version."
-  end
-end
-
-desc "Install release dependencies"
-task :install_release_dependencies do
-  require_relative "tool/release"
-
-  Release.install_dependencies!
-end
-
-desc "Prepare a release"
-task :prepare_release, [:version] => [:install_release_dependencies] do |_t, opts|
-  require_relative "tool/release"
-
-  Release.new(opts[:version] || v.to_s).prepare!
-end
-
-desc "Install rubygems to local system"
-task install: [:clear_package, :package] do
-  sh "ruby -Ilib exe/gem install --no-document pkg/rubygems-update-#{v}.gem --backtrace && update_rubygems --no-document --backtrace"
-end
-
-desc "Clears previously built package"
-task :clear_package do
-  rm_rf "pkg"
-end
-
-desc "Generates the RubyGems changelog for a specific target version"
-task :generate_changelog, [:version] => [:install_release_dependencies] do |_t, opts|
-  require_relative "tool/release"
-
-  Release.for_rubygems(opts[:version]).cut_changelog!
-end
-
-desc "Release rubygems-#{v}"
-task release: :prerelease do
-  Rake::Task["package"].invoke
-  sh "gem push pkg/rubygems-update-#{v}.gem"
-  Rake::Task["postrelease"].invoke
-end
-
-Gem::PackageTask.new(spec) {}
-
-Rake::Task["package"].enhance ["pkg/rubygems-#{v}.tgz", "pkg/rubygems-#{v}.zip"]
-
-file "pkg/rubygems-#{v}" => "pkg/rubygems-update-#{v}" do |t|
-  require "find"
-
-  dest_root = File.expand_path t.name
-
-  cd t.source do
+task default: [:
     Find.find "." do |file|
       dest = File.expand_path file, dest_root
 
