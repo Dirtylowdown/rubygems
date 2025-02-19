@@ -1,14 +1,80 @@
-# RubyGems [![Maintainability](https://api.codeclimate.com/v1/badges/30f913e9c2dd932132c1/maintainability)](https://codeclimate.com/github/rubygems/rubygems/maintainability)
+Voic
+End
+Deletf
+Stop
+Terminate 
 
-RubyGems is a package management framework for Ruby.
 
-A package (also known as a library) contains a set of functionality that can be invoked by a Ruby program, such as reading and parsing an XML file.
-We call these packages "gems" and RubyGems is a tool to install, create, manage and load these packages in your Ruby environment.
 
-RubyGems is also a client for [RubyGems.org](https://rubygems.org), a public repository of Gems that allows you to publish a Gem
-that can be shared and used by other developers. See our guide on publishing a Gem at [guides.rubygems.org](https://guides.rubygems.org/publishing/)
 
-## Getting Started
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Installing and managing a Gem is done through the `gem` command. To install a Gem such as [Faraday][faraday]:
 
